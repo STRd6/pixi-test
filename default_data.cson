@@ -1,0 +1,12 @@
+[
+  {
+    sprite: "pixie"
+    position:
+      x: 200
+      y: 150
+    anchor:
+      x: 0.5
+      y: 0.5
+    rotation: 0
+  }
+]

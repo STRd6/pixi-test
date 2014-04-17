@@ -6,6 +6,9 @@ Testing out Pixi.js
     TAU = 2 * Math.PI
     _ = require "./lib/underscore"
     {extend, pick} = _
+    
+    {applyStylesheet} = require "util"
+    applyStylesheet require("./style")
 
     PIXI = require "./lib/pixi"
 
@@ -15,27 +18,31 @@ Testing out Pixi.js
 
     document.body.appendChild(renderer.view)
 
-    texture = PIXI.Texture.fromImage("http://a0.pixiecdn.com/starwipe/64edba3e616b2c0d6f87517bc929f1b83c7a6647", true)
+Load textures from a data file and map them into Pixi.js texture objects
 
-    data = ENV?.APP_STATE
-    data ||= [
-      position:
-        x: 200
-        y: 150
-      anchor:
-        x: 0.5
-        y: 0.5
-      rotation: 0
-    ]
+    textures = require "./textures"
+    Object.keys(textures).forEach (name) ->
+      value = textures[name]
+      textures[name] = PIXI.Texture.fromImage("http://a0.pixiecdn.com/starwipe/#{value}", true)
+
+Reload our app data or use our default data.
+
+    data = ENV?.APP_STATE or require("./default_data")
+
+Reconstitute our objects using our app data.
 
     objects = data.map (datum) ->
-      object = new PIXI.Sprite(texture)
+      object = new PIXI.Sprite(textures[datum.sprite])
+
+      console.log object.sprite
 
       extend object, datum
 
       stage.addChild(object)
 
       return object
+
+Our main loop, update and draw.
 
     animate = ->
       requestAnimationFrame(animate)
@@ -47,6 +54,10 @@ Testing out Pixi.js
 
     requestAnimationFrame(animate)
 
+This is where we export and expose our app state.
+
     global.appData = ->
       stage.children.map (child) ->
-        pick child, "position", "anchor", "rotation"
+        pick child, "sprite", "position", "anchor", "rotation"
+
+    console.log JSON.stringify(appData(), null, 2)

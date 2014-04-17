@@ -1,1 +1,5 @@
 version: "0.1.0"
+width: 400
+height: 300
+dependencies:
+  util: "distri/util:v0.1.0"
