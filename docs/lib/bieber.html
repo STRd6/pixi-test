@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>main</title>
+  <title>lib/bieber</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
   <link rel="stylesheet" media="all" href="http://strd6.github.io/cdn/parallel/docco.css" />
@@ -18,7 +18,7 @@
               <div class="pilwrap">
                 <a class="pilcrow" href="#section-1">&#182;</a>
               </div>
-              <h1 id="pixi-test">Pixi Test</h1>
+              <h1 id="bieber">Bieber</h1>
 
             </div>
             <div class="content"><pre><code class="lang-coffeescript">
@@ -32,56 +32,47 @@
               <div class="pilwrap">
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
-              <p>Testing out Pixi.js</p>
+              <p>Tween it!</p>
+<p>Data is a table of prop, value list pairs</p>
+<blockquote>
+<p> x: [
+   [time, value]
+   [...]
+ ]</p>
+</blockquote>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript">TAU = <span class="number">2</span> * Math.PI
-_ = require <span class="string">"./lib/underscore"</span>
-{extend, pick} = _
+            <div class="content"><pre><code class="lang-coffeescript">module.<span class="function"><span class="title">exports</span></span> = (data={}) -&gt;
+  apply: (object, t) -&gt;
+    enumerate data, (property, tValues) -&gt;</code></pre>
+</div>
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              <div class="pilwrap">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <h2 id="helpers">Helpers</h2>
 
-PIXI = require <span class="string">"./lib/pixi"</span>
-
-stage = <span class="keyword">new</span> PIXI.Stage(<span class="number">0x66FF99</span>)
-
-renderer = PIXI.autoDetectRenderer(<span class="number">400</span>, <span class="number">300</span>)
-
-document.body.appendChild(renderer.view)
-
-texture = PIXI.Texture.fromImage(<span class="string">"http://a0.pixiecdn.com/starwipe/64edba3e616b2c0d6f87517bc929f1b83c7a6647"</span>, <span class="literal">true</span>)
-
-data = ENV?.APP_STATE
-data ||= [
-  position:
-    x: <span class="number">200</span>
-    y: <span class="number">150</span>
-  anchor:
-    x: <span class="number">0.5</span>
-    y: <span class="number">0.5</span>
-  rotation: <span class="number">0</span>
-]
-
-objects = data.map (datum) -&gt;
-  object = <span class="keyword">new</span> PIXI.Sprite(texture)
-
-  extend object, datum
-
-  stage.addChild(object)
-
-  <span class="keyword">return</span> object
-
-<span class="function"><span class="title">animate</span></span> = -&gt;
-  requestAnimationFrame(animate)
-
-  objects.forEach (object) -&gt;
-    object.rotation += TAU / <span class="number">60</span>
-
-  renderer.render(stage)
-
-requestAnimationFrame(animate)
-
-global.<span class="function"><span class="title">appData</span></span> = -&gt;
-  stage.children.map (child) -&gt;
-    pick child, <span class="string">"position"</span>, <span class="string">"anchor"</span>, <span class="string">"rotation"</span></code></pre>
+            </div>
+            <div class="content"><pre><code class="lang-coffeescript">
+</code></pre>
+</div>
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              <div class="pilwrap">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              
+            </div>
+            <div class="content"><pre><code class="lang-coffeescript"><span class="function"><span class="title">enumerate</span></span> = (object, fn) -&gt;
+  Object.keys(object).forEach (name) -&gt;
+    fn(name, object[name])</code></pre>
 </div>
         </li>
         
@@ -222,6 +213,6 @@ global.<span class="function"><span class="title">appData</span></span> = -&gt;
 
 }).call(this);
 
-</script><script src="package.js"></script>
+</script><script src="../package.js"></script>
 </body>
 </html>
