@@ -39,37 +39,80 @@
 _ = require <span class="string">"./lib/underscore"</span>
 {extend, pick} = _
 
+{applyStylesheet} = require <span class="string">"util"</span>
+applyStylesheet require(<span class="string">"./style"</span>)
+
 PIXI = require <span class="string">"./lib/pixi"</span>
 
 stage = <span class="keyword">new</span> PIXI.Stage(<span class="number">0x66FF99</span>)
 
 renderer = PIXI.autoDetectRenderer(<span class="number">400</span>, <span class="number">300</span>)
 
-document.body.appendChild(renderer.view)
+document.body.appendChild(renderer.view)</code></pre>
+</div>
+        </li>
+        
+        
+        <li id="section-3">
+            <div class="annotation">
+              <div class="pilwrap">
+                <a class="pilcrow" href="#section-3">&#182;</a>
+              </div>
+              <p>Load textures from a data file and map them into Pixi.js texture objects</p>
 
-texture = PIXI.Texture.fromImage(<span class="string">"http://a0.pixiecdn.com/starwipe/64edba3e616b2c0d6f87517bc929f1b83c7a6647"</span>, <span class="literal">true</span>)
+            </div>
+            <div class="content"><pre><code class="lang-coffeescript">textures = require <span class="string">"./textures"</span>
+Object.keys(textures).forEach (name) -&gt;
+  value = textures[name]
+  textures[name] = PIXI.Texture.fromImage(<span class="string">"http://a0.pixiecdn.com/starwipe/<span class="subst">#{value}</span>"</span>, <span class="literal">true</span>)</code></pre>
+</div>
+        </li>
+        
+        
+        <li id="section-4">
+            <div class="annotation">
+              <div class="pilwrap">
+                <a class="pilcrow" href="#section-4">&#182;</a>
+              </div>
+              <p>Reload our app data or use our default data.</p>
 
-data = ENV?.APP_STATE
-data ||= [
-  position:
-    x: <span class="number">200</span>
-    y: <span class="number">150</span>
-  anchor:
-    x: <span class="number">0.5</span>
-    y: <span class="number">0.5</span>
-  rotation: <span class="number">0</span>
-]
+            </div>
+            <div class="content"><pre><code class="lang-coffeescript">data = ENV?.APP_STATE <span class="keyword">or</span> require(<span class="string">"./default_data"</span>)</code></pre>
+</div>
+        </li>
+        
+        
+        <li id="section-5">
+            <div class="annotation">
+              <div class="pilwrap">
+                <a class="pilcrow" href="#section-5">&#182;</a>
+              </div>
+              <p>Reconstitute our objects using our app data.</p>
 
-objects = data.map (datum) -&gt;
-  object = <span class="keyword">new</span> PIXI.Sprite(texture)
+            </div>
+            <div class="content"><pre><code class="lang-coffeescript">objects = data.map (datum) -&gt;
+  object = <span class="keyword">new</span> PIXI.Sprite(textures[datum.sprite])
+
+  console.log object.sprite
 
   extend object, datum
 
   stage.addChild(object)
 
-  <span class="keyword">return</span> object
+  <span class="keyword">return</span> object</code></pre>
+</div>
+        </li>
+        
+        
+        <li id="section-6">
+            <div class="annotation">
+              <div class="pilwrap">
+                <a class="pilcrow" href="#section-6">&#182;</a>
+              </div>
+              <p>Our main loop, update and draw.</p>
 
-<span class="function"><span class="title">animate</span></span> = -&gt;
+            </div>
+            <div class="content"><pre><code class="lang-coffeescript"><span class="function"><span class="title">animate</span></span> = -&gt;
   requestAnimationFrame(animate)
 
   objects.forEach (object) -&gt;
@@ -77,11 +120,24 @@ objects = data.map (datum) -&gt;
 
   renderer.render(stage)
 
-requestAnimationFrame(animate)
+requestAnimationFrame(animate)</code></pre>
+</div>
+        </li>
+        
+        
+        <li id="section-7">
+            <div class="annotation">
+              <div class="pilwrap">
+                <a class="pilcrow" href="#section-7">&#182;</a>
+              </div>
+              <p>This is where we export and expose our app state.</p>
 
-global.<span class="function"><span class="title">appData</span></span> = -&gt;
+            </div>
+            <div class="content"><pre><code class="lang-coffeescript">global.<span class="function"><span class="title">appData</span></span> = -&gt;
   stage.children.map (child) -&gt;
-    pick child, <span class="string">"position"</span>, <span class="string">"anchor"</span>, <span class="string">"rotation"</span></code></pre>
+    pick child, <span class="string">"sprite"</span>, <span class="string">"position"</span>, <span class="string">"anchor"</span>, <span class="string">"rotation"</span>
+
+console.log JSON.stringify(appData(), <span class="literal">null</span>, <span class="number">2</span>)</code></pre>
 </div>
         </li>
         
