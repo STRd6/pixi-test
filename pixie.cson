@@ -1,5 +1,9 @@
 version: "0.1.0"
-width: 400
-height: 300
+width: 1280
+height: 720
+remoteDependencies: [
+  "https://cdnjs.cloudflare.com/ajax/libs/coffee-script/1.6.3/coffee-script.min.js"
+]
 dependencies:
   util: "distri/util:v0.1.0"
+  observable: "distri/observable:v0.1.1"

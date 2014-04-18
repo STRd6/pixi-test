@@ -5,16 +5,25 @@ Testing out Pixi.js
 
     TAU = 2 * Math.PI
     _ = require "./lib/underscore"
-    {extend, pick} = _
-    
+    {extend, pick, debounce} = _
+
     {applyStylesheet} = require "util"
     applyStylesheet require("./style")
+    {width, height} = require "./pixie"
+
+    {update, applyProperties} = require "./object_updater"
+    editor = require("./editor")()
 
     PIXI = require "./lib/pixi"
 
     stage = new PIXI.Stage(0x66FF99)
 
-    renderer = PIXI.autoDetectRenderer(400, 300)
+    renderer = PIXI.autoDetectRenderer(width, height)
+
+    clickHandler = (mouseData) ->
+
+      if mouseData.originalEvent.ctrlKey
+        editor.activeObject mouseData.target
 
     document.body.appendChild(renderer.view)
 
@@ -27,28 +36,33 @@ Load textures from a data file and map them into Pixi.js texture objects
 
 Reload our app data or use our default data.
 
-    data = ENV?.APP_STATE or require("./default_data")
+    if data = ENV?.APP_STATE
+      data = JSON.parse(data)
+    else
+      data = require("./default_data")
 
 Reconstitute our objects using our app data.
 
     objects = data.map (datum) ->
       object = new PIXI.Sprite(textures[datum.sprite])
 
-      console.log object.sprite
+      object.data = datum
+      object.interactive = true
+      object.click = clickHandler
 
-      extend object, datum
-
+      applyProperties(object)
       stage.addChild(object)
 
       return object
 
 Our main loop, update and draw.
 
+    dt = 1/60
     animate = ->
       requestAnimationFrame(animate)
 
       objects.forEach (object) ->
-        object.rotation += TAU / 60
+        update(object, dt)
 
       renderer.render(stage)
 
@@ -57,7 +71,7 @@ Our main loop, update and draw.
 This is where we export and expose our app state.
 
     global.appData = ->
-      stage.children.map (child) ->
-        pick child, "sprite", "position", "anchor", "rotation"
+      JSON.stringify stage.children.map (child) ->
+        child.data
 
     console.log JSON.stringify(appData(), null, 2)
