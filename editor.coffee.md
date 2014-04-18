@@ -5,6 +5,8 @@ Simple script editor for objects
 
     Observable = require "observable"
 
+    {hydrate} = require "./object_updater"
+
     module.exports = ->
       self =
         script: Observable ""
@@ -21,15 +23,12 @@ Simple script editor for objects
         else
           self.view.classList.remove("active")
 
-      self.script.observe (script) ->
-        try
-          compiled = Function CoffeeScript.compile script, bare: true
-        catch error
-          self.error error
-          console.error error
+      self.activeObject.observe (object) ->
+        self.script object.script or ""
 
-        if (data = self.activeObject()?.data) and compiled
-          data.script = script
-          compiled.call data
+      self.script.observe (script) ->
+        if object = self.activeObject()
+          object.script = script
+          hydrate(object)
 
       return self

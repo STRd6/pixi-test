@@ -20,21 +20,31 @@ Apply special properties to scene object.
       rotation
     """
 
-Run an objects update function if it exists
+Run an objects update function if it exists.
 
-    update = (object, dt) ->
-      object.data.update?(dt)
-      applyProperties(object)
+    update = (hostObject, dt) ->
+      hostObject.data.update?(dt)
+      applyProperties(hostObject)
 
 Apply all the special properties into the PIXI runtime.
 
     # TODO: Add `sprite` and `filters` lookups
-    applyProperties = (object) ->
-      data = object.data
+    applyProperties = (hostObject) ->
+      data = hostObject.data
       SCENE_PROPS.forEach (name) ->
         if data[name] != undefined
-          object[name] = data[name]
+          hostObject[name] = data[name]
+
+    hydrate = (object) ->
+      try
+        compiled = Function CoffeeScript.compile object.script, bare: true
+      catch error
+        console.error error
+
+      if compiled
+        compiled.call object
 
     module.exports =
+      hydrate: hydrate
       update: update
       applyProperties: applyProperties

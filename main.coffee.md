@@ -3,9 +3,7 @@ Pixi Test
 
 Testing out Pixi.js
 
-    TAU = 2 * Math.PI
     _ = require "./lib/underscore"
-    {extend, pick, debounce} = _
 
     {applyStylesheet} = require "util"
     applyStylesheet require("./style")
@@ -15,15 +13,17 @@ Testing out Pixi.js
     editor = require("./editor")()
 
     PIXI = require "./lib/pixi"
+    # PIXI.Texture.SCALE_MODE.DEFAULT = PIXI.Texture.SCALE_MODE.NEAREST
 
     stage = new PIXI.Stage(0x66FF99)
 
     renderer = PIXI.autoDetectRenderer(width, height)
 
     clickHandler = (mouseData) ->
-
       if mouseData.originalEvent.ctrlKey
-        editor.activeObject mouseData.target
+        editor.activeObject mouseData.target.data
+      else
+        click(mouseData.target.data)
 
     document.body.appendChild(renderer.view)
 
@@ -45,6 +45,10 @@ Reconstitute our objects using our app data.
 
     objects = data.map (datum) ->
       object = new PIXI.Sprite(textures[datum.sprite])
+
+      datum._host = object
+
+      object.anchor.x = object.anchor.y = 0.5
 
       object.data = datum
       object.interactive = true
@@ -72,6 +76,6 @@ This is where we export and expose our app state.
 
     global.appData = ->
       JSON.stringify stage.children.map (child) ->
-        child.data
+        _.omit child.data, "_host"
 
     console.log JSON.stringify(appData(), null, 2)
