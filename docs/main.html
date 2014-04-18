@@ -41,7 +41,7 @@
 applyStylesheet require(<span class="string">"./style"</span>)
 {width, height} = require <span class="string">"./pixie"</span>
 
-{update, applyProperties} = require <span class="string">"./object_updater"</span>
+{update, applyProperties, hydrate} = require <span class="string">"./object_updater"</span>
 editor = require(<span class="string">"./editor"</span>)()
 
 PIXI = require <span class="string">"./lib/pixi"</span>
@@ -55,7 +55,8 @@ renderer = PIXI.autoDetectRenderer(width, height)
   <span class="keyword">if</span> mouseData.originalEvent.ctrlKey
     editor.activeObject mouseData.target.data
   <span class="keyword">else</span>
-    click(mouseData.target.data)
+    <span class="keyword">if</span> data = mouseData.target.data
+      data.click?(data)
 
 document.body.appendChild(renderer.view)</code></pre>
 </div>
@@ -113,6 +114,7 @@ Object.keys(textures).forEach (name) -&gt;
   object.interactive = <span class="literal">true</span>
   object.click = clickHandler
 
+  hydrate(object.data)
   applyProperties(object)
   stage.addChild(object)
 

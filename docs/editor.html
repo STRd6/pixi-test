@@ -56,7 +56,8 @@ module.<span class="function"><span class="title">exports</span></span> = -&gt;
       self.view.classList.remove(<span class="string">"active"</span>)
 
   self.activeObject.observe (object) -&gt;
-    self.script object.script <span class="keyword">or</span> <span class="string">""</span>
+    <span class="keyword">if</span> object
+      self.script object.script <span class="keyword">or</span> <span class="string">""</span>
 
   self.script.observe (script) -&gt;
     <span class="keyword">if</span> object = self.activeObject()
