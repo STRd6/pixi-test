@@ -228,7 +228,7 @@
     },
     "style.styl": {
       "path": "style.styl",
-      "content": "*\n  box-sizing: border-box\n\nhtml\n  height: 100%\n\nbody\n  height: 100%\n  margin: 0\n  overflow: hidden\n\n.overlay\n  position: absolute\n  width: 40%\n  height: 100%\n  top: 100%\n  z-index: 9000\n  transition-duration: 0.3s\n\n  &.active\n    top: 0\n\n  textarea\n    width: 100%\n    height: 100%\n",
+      "content": "*\n  box-sizing: border-box\n\nhtml\n  height: 100%\n\nbody\n  height: 100%\n  margin: 0\n  overflow: hidden\n\ncanvas\n  margin: auto\n  position: absolute\n  top: 0\n  bottom: 0\n  left: 0\n  right: 0\n\n.overlay\n  position: absolute\n  width: 40%\n  height: 100%\n  top: 100%\n  z-index: 9000\n  transition-duration: 0.3s\n\n  &.active\n    top: 0\n\n  textarea\n    width: 100%\n    height: 100%\n",
       "mode": "100644",
       "type": "blob"
     },
@@ -288,7 +288,7 @@
     },
     "style": {
       "path": "style",
-      "content": "module.exports = \"* {\\n  -ms-box-sizing: border-box;\\n  -moz-box-sizing: border-box;\\n  -webkit-box-sizing: border-box;\\n  box-sizing: border-box;\\n}\\n\\nhtml {\\n  height: 100%;\\n}\\n\\nbody {\\n  height: 100%;\\n  margin: 0;\\n  overflow: hidden;\\n}\\n\\n.overlay {\\n  position: absolute;\\n  width: 40%;\\n  height: 100%;\\n  top: 100%;\\n  z-index: 9000;\\n  -ms-transition-duration: 0.3s;\\n  -moz-transition-duration: 0.3s;\\n  -webkit-transition-duration: 0.3s;\\n  transition-duration: 0.3s;\\n}\\n\\n.overlay.active {\\n  top: 0;\\n}\\n\\n.overlay textarea {\\n  width: 100%;\\n  height: 100%;\\n}\";",
+      "content": "module.exports = \"* {\\n  -ms-box-sizing: border-box;\\n  -moz-box-sizing: border-box;\\n  -webkit-box-sizing: border-box;\\n  box-sizing: border-box;\\n}\\n\\nhtml {\\n  height: 100%;\\n}\\n\\nbody {\\n  height: 100%;\\n  margin: 0;\\n  overflow: hidden;\\n}\\n\\ncanvas {\\n  margin: auto;\\n  position: absolute;\\n  top: 0;\\n  bottom: 0;\\n  left: 0;\\n  right: 0;\\n}\\n\\n.overlay {\\n  position: absolute;\\n  width: 40%;\\n  height: 100%;\\n  top: 100%;\\n  z-index: 9000;\\n  -ms-transition-duration: 0.3s;\\n  -moz-transition-duration: 0.3s;\\n  -webkit-transition-duration: 0.3s;\\n  transition-duration: 0.3s;\\n}\\n\\n.overlay.active {\\n  top: 0;\\n}\\n\\n.overlay textarea {\\n  width: 100%;\\n  height: 100%;\\n}\";",
       "type": "blob"
     },
     "templates/editor": {
