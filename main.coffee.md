@@ -80,5 +80,14 @@ This is where we export and expose our app state.
       JSON.stringify stage.children.map (child) ->
         _.omit child.data, "_host"
 
-    console.log JSON.stringify(appData(), null, 2)
+Text sample (still need to figure out how to handle different PIXI types for our
+objects)
 
+    addText = ->
+      textSample = new PIXI.Text "Pixi.js can has\nmultiline text!",
+        font: "35px Snippet"
+        fill: "white"
+        align: "left"
+      textSample.position.x = 20
+      textSample.position.y = 20
+      stage.addChild(textSample)
