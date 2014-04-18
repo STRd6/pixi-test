@@ -2,7 +2,7 @@
 
 <html>
 <head>
-  <title>main</title>
+  <title>object_updater</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
   <link rel="stylesheet" media="all" href="http://strd6.github.io/cdn/parallel/docco.css" />
@@ -18,7 +18,7 @@
               <div class="pilwrap">
                 <a class="pilcrow" href="#section-1">&#182;</a>
               </div>
-              <h1 id="pixi-test">Pixi Test</h1>
+              <h1 id="object-updater">Object Updater</h1>
 
             </div>
             <div class="content"><pre><code class="lang-coffeescript">
@@ -32,32 +32,24 @@
               <div class="pilwrap">
                 <a class="pilcrow" href="#section-2">&#182;</a>
               </div>
-              <p>Testing out Pixi.js</p>
+              <p>These functions </p>
+<p>Apply special properties to scene object.</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript">TAU = <span class="number">2</span> * Math.PI
-_ = require <span class="string">"./lib/underscore"</span>
-{extend, pick, debounce} = _
+            <div class="content"><pre><code class="lang-coffeescript"><span class="function"><span class="title">w</span></span> = (string) -&gt;
+  string.split(<span class="regexp">/\s+/</span>)
 
-{applyStylesheet} = require <span class="string">"util"</span>
-applyStylesheet require(<span class="string">"./style"</span>)
-{width, height} = require <span class="string">"./pixie"</span>
-
-{update, applyProperties} = require <span class="string">"./object_updater"</span>
-editor = require(<span class="string">"./editor"</span>)()
-
-PIXI = require <span class="string">"./lib/pixi"</span>
-
-stage = <span class="keyword">new</span> PIXI.Stage(<span class="number">0x66FF99</span>)
-
-renderer = PIXI.autoDetectRenderer(width, height)
-
-<span class="function"><span class="title">clickHandler</span></span> = (mouseData) -&gt;
-
-  <span class="keyword">if</span> mouseData.originalEvent.ctrlKey
-    editor.activeObject mouseData.target
-
-document.body.appendChild(renderer.view)</code></pre>
+SCENE_PROPS = w <span class="string">"""
+  alpha
+  width
+  height
+  position
+  rotation
+  scale
+  x
+  y
+  rotation
+"""</span></code></pre>
 </div>
         </li>
         
@@ -67,13 +59,12 @@ document.body.appendChild(renderer.view)</code></pre>
               <div class="pilwrap">
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
-              <p>Load textures from a data file and map them into Pixi.js texture objects</p>
+              <p>Run an objects update function if it exists</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript">textures = require <span class="string">"./textures"</span>
-Object.keys(textures).forEach (name) -&gt;
-  value = textures[name]
-  textures[name] = PIXI.Texture.fromImage(<span class="string">"http://a0.pixiecdn.com/starwipe/<span class="subst">#{value}</span>"</span>, <span class="literal">true</span>)</code></pre>
+            <div class="content"><pre><code class="lang-coffeescript"><span class="function"><span class="title">update</span></span> = (object, dt) -&gt;
+  object.data.update?(dt)
+  applyProperties(object)</code></pre>
 </div>
         </li>
         
@@ -83,75 +74,19 @@ Object.keys(textures).forEach (name) -&gt;
               <div class="pilwrap">
                 <a class="pilcrow" href="#section-4">&#182;</a>
               </div>
-              <p>Reload our app data or use our default data.</p>
+              <p>Apply all the special properties into the PIXI runtime.</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript"><span class="keyword">if</span> data = ENV?.APP_STATE
-  data = JSON.parse(data)
-<span class="keyword">else</span>
-  data = require(<span class="string">"./default_data"</span>)</code></pre>
-</div>
-        </li>
-        
-        
-        <li id="section-5">
-            <div class="annotation">
-              <div class="pilwrap">
-                <a class="pilcrow" href="#section-5">&#182;</a>
-              </div>
-              <p>Reconstitute our objects using our app data.</p>
+            <div class="content"><pre><code class="lang-coffeescript"><span class="comment"># TODO: Add `sprite` and `filters` lookups</span>
+<span class="function"><span class="title">applyProperties</span></span> = (object) -&gt;
+  data = object.data
+  SCENE_PROPS.forEach (name) -&gt;
+    <span class="keyword">if</span> data[name] != <span class="literal">undefined</span>
+      object[name] = data[name]
 
-            </div>
-            <div class="content"><pre><code class="lang-coffeescript">objects = data.map (datum) -&gt;
-  object = <span class="keyword">new</span> PIXI.Sprite(textures[datum.sprite])
-
-  object.data = datum
-  object.interactive = <span class="literal">true</span>
-  object.click = clickHandler
-
-  applyProperties(object)
-  stage.addChild(object)
-
-  <span class="keyword">return</span> object</code></pre>
-</div>
-        </li>
-        
-        
-        <li id="section-6">
-            <div class="annotation">
-              <div class="pilwrap">
-                <a class="pilcrow" href="#section-6">&#182;</a>
-              </div>
-              <p>Our main loop, update and draw.</p>
-
-            </div>
-            <div class="content"><pre><code class="lang-coffeescript">dt = <span class="number">1</span>/<span class="number">60</span>
-<span class="function"><span class="title">animate</span></span> = -&gt;
-  requestAnimationFrame(animate)
-
-  objects.forEach (object) -&gt;
-    update(object, dt)
-
-  renderer.render(stage)
-
-requestAnimationFrame(animate)</code></pre>
-</div>
-        </li>
-        
-        
-        <li id="section-7">
-            <div class="annotation">
-              <div class="pilwrap">
-                <a class="pilcrow" href="#section-7">&#182;</a>
-              </div>
-              <p>This is where we export and expose our app state.</p>
-
-            </div>
-            <div class="content"><pre><code class="lang-coffeescript">global.<span class="function"><span class="title">appData</span></span> = -&gt;
-  JSON.stringify stage.children.map (child) -&gt;
-    child.data
-
-console.log JSON.stringify(appData(), <span class="literal">null</span>, <span class="number">2</span>)</code></pre>
+module.exports =
+  update: update
+  applyProperties: applyProperties</code></pre>
 </div>
         </li>
         

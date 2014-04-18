@@ -14,7 +14,7 @@ window["STRd6/pixi-test:master"]({
     },
     "main.coffee.md": {
       "path": "main.coffee.md",
-      "content": "Pixi Test\n=========\n\nTesting out Pixi.js\n\n    TAU = 2 * Math.PI\n    _ = require \"./lib/underscore\"\n    {extend, pick} = _\n    \n    {applyStylesheet} = require \"util\"\n    applyStylesheet require(\"./style\")\n\n    PIXI = require \"./lib/pixi\"\n\n    stage = new PIXI.Stage(0x66FF99)\n\n    renderer = PIXI.autoDetectRenderer(400, 300)\n\n    document.body.appendChild(renderer.view)\n\nLoad textures from a data file and map them into Pixi.js texture objects\n\n    textures = require \"./textures\"\n    Object.keys(textures).forEach (name) ->\n      value = textures[name]\n      textures[name] = PIXI.Texture.fromImage(\"http://a0.pixiecdn.com/starwipe/#{value}\", true)\n\nReload our app data or use our default data.\n\n    data = ENV?.APP_STATE or require(\"./default_data\")\n\nReconstitute our objects using our app data.\n\n    objects = data.map (datum) ->\n      object = new PIXI.Sprite(textures[datum.sprite])\n\n      console.log object.sprite\n\n      extend object, datum\n\n      stage.addChild(object)\n\n      return object\n\nOur main loop, update and draw.\n\n    animate = ->\n      requestAnimationFrame(animate)\n\n      objects.forEach (object) ->\n        object.rotation += TAU / 60\n\n      renderer.render(stage)\n\n    requestAnimationFrame(animate)\n\nThis is where we export and expose our app state.\n\n    global.appData = ->\n      stage.children.map (child) ->\n        pick child, \"sprite\", \"position\", \"anchor\", \"rotation\"\n\n    console.log JSON.stringify(appData(), null, 2)\n",
+      "content": "Pixi Test\n=========\n\nTesting out Pixi.js\n\n    TAU = 2 * Math.PI\n    _ = require \"./lib/underscore\"\n    {extend, pick, debounce} = _\n\n    {applyStylesheet} = require \"util\"\n    applyStylesheet require(\"./style\")\n    {width, height} = require \"./pixie\"\n\n    {update, applyProperties} = require \"./object_updater\"\n    editor = require(\"./editor\")()\n\n    PIXI = require \"./lib/pixi\"\n\n    stage = new PIXI.Stage(0x66FF99)\n\n    renderer = PIXI.autoDetectRenderer(width, height)\n\n    clickHandler = (mouseData) ->\n\n      if mouseData.originalEvent.ctrlKey\n        editor.activeObject mouseData.target\n\n    document.body.appendChild(renderer.view)\n\nLoad textures from a data file and map them into Pixi.js texture objects\n\n    textures = require \"./textures\"\n    Object.keys(textures).forEach (name) ->\n      value = textures[name]\n      textures[name] = PIXI.Texture.fromImage(\"http://a0.pixiecdn.com/starwipe/#{value}\", true)\n\nReload our app data or use our default data.\n\n    if data = ENV?.APP_STATE\n      data = JSON.parse(data)\n    else\n      data = require(\"./default_data\")\n\nReconstitute our objects using our app data.\n\n    objects = data.map (datum) ->\n      object = new PIXI.Sprite(textures[datum.sprite])\n\n      object.data = datum\n      object.interactive = true\n      object.click = clickHandler\n\n      applyProperties(object)\n      stage.addChild(object)\n\n      return object\n\nOur main loop, update and draw.\n\n    dt = 1/60\n    animate = ->\n      requestAnimationFrame(animate)\n\n      objects.forEach (object) ->\n        update(object, dt)\n\n      renderer.render(stage)\n\n    requestAnimationFrame(animate)\n\nThis is where we export and expose our app state.\n\n    global.appData = ->\n      JSON.stringify stage.children.map (child) ->\n        child.data\n\n    console.log JSON.stringify(appData(), null, 2)\n",
       "mode": "100644"
     },
     "lib/pixi.js": {
@@ -24,7 +24,7 @@ window["STRd6/pixi-test:master"]({
     },
     "pixie.cson": {
       "path": "pixie.cson",
-      "content": "version: \"0.1.0\"\nwidth: 400\nheight: 300\ndependencies:\n  util: \"distri/util:v0.1.0\"\n",
+      "content": "version: \"0.1.0\"\nwidth: 1280\nheight: 720\nremoteDependencies: [\n  \"https://cdnjs.cloudflare.com/ajax/libs/coffee-script/1.6.3/coffee-script.min.js\"\n]\ndependencies:\n  util: \"distri/util:v0.1.0\"\n  observable: \"distri/observable:v0.1.1\"\n",
       "mode": "100644"
     },
     "lib/underscore.js": {
@@ -49,14 +49,29 @@ window["STRd6/pixi-test:master"]({
     },
     "style.styl": {
       "path": "style.styl",
-      "content": "html\n  height: 100%\n\nbody\n  height: 100%\n  margin: 0\n  overflow: hidden\n",
+      "content": "*\n  box-sizing: border-box\n\nhtml\n  height: 100%\n\nbody\n  height: 100%\n  margin: 0\n  overflow: hidden\n\n.overlay\n  position: absolute\n  width: 40%\n  height: 100%\n  top: 100%\n  z-index: 9000\n  transition-duration: 0.3s\n\n  &.active\n    top: 0\n\n  textarea\n    width: 100%\n    height: 100%\n",
+      "mode": "100644"
+    },
+    "object_updater.coffee.md": {
+      "path": "object_updater.coffee.md",
+      "content": "Object Updater\n==============\n\nThese functions \n\nApply special properties to scene object.\n\n    w = (string) ->\n      string.split(/\\s+/)\n\n    SCENE_PROPS = w \"\"\"\n      alpha\n      width\n      height\n      position\n      rotation\n      scale\n      x\n      y\n      rotation\n    \"\"\"\n\nRun an objects update function if it exists\n\n    update = (object, dt) ->\n      object.data.update?(dt)\n      applyProperties(object)\n\nApply all the special properties into the PIXI runtime.\n\n    # TODO: Add `sprite` and `filters` lookups\n    applyProperties = (object) ->\n      data = object.data\n      SCENE_PROPS.forEach (name) ->\n        if data[name] != undefined\n          object[name] = data[name]\n\n    module.exports =\n      update: update\n      applyProperties: applyProperties\n",
+      "mode": "100644"
+    },
+    "templates/editor.haml": {
+      "path": "templates/editor.haml",
+      "content": "- editor = this\n.overlay.editor(class=@activeClass)\n  - script = @script\n  %textarea(value=@script)\n    - on \"keyup\", (e) ->\n      - if e.keyCode is 27 # ESC\n        - editor.activeObject null\n      - else\n        - script e.target.value\n",
+      "mode": "100644"
+    },
+    "editor.coffee.md": {
+      "path": "editor.coffee.md",
+      "content": "Editor\n======\n\nSimple script editor for objects\n\n    Observable = require \"observable\"\n\n    module.exports = ->\n      self =\n        script: Observable \"\"\n        activeObject: Observable null\n        error: Observable \"\"\n\n      self.view = require(\"./templates/editor\")(self).children[0]\n      document.body.appendChild self.view\n\n      # TODO: Figure out how to add class better in hamljr\n      self.activeObject.observe (newValue) ->\n        if newValue\n          self.view.classList.add(\"active\")\n        else\n          self.view.classList.remove(\"active\")\n\n      self.script.observe (script) ->\n        try\n          compiled = Function CoffeeScript.compile script, bare: true\n        catch error\n          self.error error\n          console.error error\n\n        if (data = self.activeObject()?.data) and compiled\n          data.script = script\n          compiled.call data\n\n      return self\n",
       "mode": "100644"
     }
   },
   "distribution": {
     "main": {
       "path": "main",
-      "content": "(function() {\n  var PIXI, TAU, animate, applyStylesheet, data, extend, objects, pick, renderer, stage, textures, _;\n\n  TAU = 2 * Math.PI;\n\n  _ = require(\"./lib/underscore\");\n\n  extend = _.extend, pick = _.pick;\n\n  applyStylesheet = require(\"util\").applyStylesheet;\n\n  applyStylesheet(require(\"./style\"));\n\n  PIXI = require(\"./lib/pixi\");\n\n  stage = new PIXI.Stage(0x66FF99);\n\n  renderer = PIXI.autoDetectRenderer(400, 300);\n\n  document.body.appendChild(renderer.view);\n\n  textures = require(\"./textures\");\n\n  Object.keys(textures).forEach(function(name) {\n    var value;\n    value = textures[name];\n    return textures[name] = PIXI.Texture.fromImage(\"http://a0.pixiecdn.com/starwipe/\" + value, true);\n  });\n\n  data = (typeof ENV !== \"undefined\" && ENV !== null ? ENV.APP_STATE : void 0) || require(\"./default_data\");\n\n  objects = data.map(function(datum) {\n    var object;\n    object = new PIXI.Sprite(textures[datum.sprite]);\n    console.log(object.sprite);\n    extend(object, datum);\n    stage.addChild(object);\n    return object;\n  });\n\n  animate = function() {\n    requestAnimationFrame(animate);\n    objects.forEach(function(object) {\n      return object.rotation += TAU / 60;\n    });\n    return renderer.render(stage);\n  };\n\n  requestAnimationFrame(animate);\n\n  global.appData = function() {\n    return stage.children.map(function(child) {\n      return pick(child, \"sprite\", \"position\", \"anchor\", \"rotation\");\n    });\n  };\n\n  console.log(JSON.stringify(appData(), null, 2));\n\n}).call(this);\n",
+      "content": "(function() {\n  var PIXI, TAU, animate, applyProperties, applyStylesheet, clickHandler, data, debounce, dt, editor, extend, height, objects, pick, renderer, stage, textures, update, width, _, _ref, _ref1;\n\n  TAU = 2 * Math.PI;\n\n  _ = require(\"./lib/underscore\");\n\n  extend = _.extend, pick = _.pick, debounce = _.debounce;\n\n  applyStylesheet = require(\"util\").applyStylesheet;\n\n  applyStylesheet(require(\"./style\"));\n\n  _ref = require(\"./pixie\"), width = _ref.width, height = _ref.height;\n\n  _ref1 = require(\"./object_updater\"), update = _ref1.update, applyProperties = _ref1.applyProperties;\n\n  editor = require(\"./editor\")();\n\n  PIXI = require(\"./lib/pixi\");\n\n  stage = new PIXI.Stage(0x66FF99);\n\n  renderer = PIXI.autoDetectRenderer(width, height);\n\n  clickHandler = function(mouseData) {\n    if (mouseData.originalEvent.ctrlKey) {\n      return editor.activeObject(mouseData.target);\n    }\n  };\n\n  document.body.appendChild(renderer.view);\n\n  textures = require(\"./textures\");\n\n  Object.keys(textures).forEach(function(name) {\n    var value;\n    value = textures[name];\n    return textures[name] = PIXI.Texture.fromImage(\"http://a0.pixiecdn.com/starwipe/\" + value, true);\n  });\n\n  if (data = typeof ENV !== \"undefined\" && ENV !== null ? ENV.APP_STATE : void 0) {\n    data = JSON.parse(data);\n  } else {\n    data = require(\"./default_data\");\n  }\n\n  objects = data.map(function(datum) {\n    var object;\n    object = new PIXI.Sprite(textures[datum.sprite]);\n    object.data = datum;\n    object.interactive = true;\n    object.click = clickHandler;\n    applyProperties(object);\n    stage.addChild(object);\n    return object;\n  });\n\n  dt = 1 / 60;\n\n  animate = function() {\n    requestAnimationFrame(animate);\n    objects.forEach(function(object) {\n      return update(object, dt);\n    });\n    return renderer.render(stage);\n  };\n\n  requestAnimationFrame(animate);\n\n  global.appData = function() {\n    return JSON.stringify(stage.children.map(function(child) {\n      return child.data;\n    }));\n  };\n\n  console.log(JSON.stringify(appData(), null, 2));\n\n}).call(this);\n",
       "type": "blob"
     },
     "lib/pixi": {
@@ -66,7 +81,7 @@ window["STRd6/pixi-test:master"]({
     },
     "pixie": {
       "path": "pixie",
-      "content": "module.exports = {\"version\":\"0.1.0\",\"width\":400,\"height\":300,\"dependencies\":{\"util\":\"distri/util:v0.1.0\"}};",
+      "content": "module.exports = {\"version\":\"0.1.0\",\"width\":1280,\"height\":720,\"remoteDependencies\":[\"https://cdnjs.cloudflare.com/ajax/libs/coffee-script/1.6.3/coffee-script.min.js\"],\"dependencies\":{\"util\":\"distri/util:v0.1.0\",\"observable\":\"distri/observable:v0.1.1\"}};",
       "type": "blob"
     },
     "lib/underscore": {
@@ -91,7 +106,27 @@ window["STRd6/pixi-test:master"]({
     },
     "style": {
       "path": "style",
-      "content": "module.exports = \"html {\\n  height: 100%;\\n}\\n\\nbody {\\n  height: 100%;\\n  margin: 0;\\n  overflow: hidden;\\n}\";",
+      "content": "module.exports = \"* {\\n  -ms-box-sizing: border-box;\\n  -moz-box-sizing: border-box;\\n  -webkit-box-sizing: border-box;\\n  box-sizing: border-box;\\n}\\n\\nhtml {\\n  height: 100%;\\n}\\n\\nbody {\\n  height: 100%;\\n  margin: 0;\\n  overflow: hidden;\\n}\\n\\n.overlay {\\n  position: absolute;\\n  width: 40%;\\n  height: 100%;\\n  top: 100%;\\n  z-index: 9000;\\n  -ms-transition-duration: 0.3s;\\n  -moz-transition-duration: 0.3s;\\n  -webkit-transition-duration: 0.3s;\\n  transition-duration: 0.3s;\\n}\\n\\n.overlay.active {\\n  top: 0;\\n}\\n\\n.overlay textarea {\\n  width: 100%;\\n  height: 100%;\\n}\";",
+      "type": "blob"
+    },
+    "object_updater": {
+      "path": "object_updater",
+      "content": "(function() {\n  var SCENE_PROPS, applyProperties, update, w;\n\n  w = function(string) {\n    return string.split(/\\s+/);\n  };\n\n  SCENE_PROPS = w(\"alpha\\nwidth\\nheight\\nposition\\nrotation\\nscale\\nx\\ny\\nrotation\");\n\n  update = function(object, dt) {\n    var _base;\n    if (typeof (_base = object.data).update === \"function\") {\n      _base.update(dt);\n    }\n    return applyProperties(object);\n  };\n\n  applyProperties = function(object) {\n    var data;\n    data = object.data;\n    return SCENE_PROPS.forEach(function(name) {\n      if (data[name] !== void 0) {\n        return object[name] = data[name];\n      }\n    });\n  };\n\n  module.exports = {\n    update: update,\n    applyProperties: applyProperties\n  };\n\n}).call(this);\n",
+      "type": "blob"
+    },
+    "templates/editor": {
+      "path": "templates/editor",
+      "content": "Runtime = require(\"/_lib/hamljr_runtime\");\n\nmodule.exports = (function(data) {\n  return (function() {\n    var editor, script, __runtime;\n    __runtime = Runtime(this);\n    __runtime.push(document.createDocumentFragment());\n    editor = this;\n    __runtime.push(document.createElement(\"div\"));\n    __runtime.classes(\"overlay\", \"editor\", this.activeClass);\n    script = this.script;\n    __runtime.push(document.createElement(\"textarea\"));\n    __runtime.attribute(\"value\", this.script);\n    __runtime.on(\"keyup\", function(e) {\n      if (e.keyCode === 27) {\n        return editor.activeObject(null);\n      } else {\n        return script(e.target.value);\n      }\n    });\n    __runtime.pop();\n    __runtime.pop();\n    return __runtime.pop();\n  }).call(data);\n});\n",
+      "type": "blob"
+    },
+    "editor": {
+      "path": "editor",
+      "content": "(function() {\n  var Observable;\n\n  Observable = require(\"observable\");\n\n  module.exports = function() {\n    var self;\n    self = {\n      script: Observable(\"\"),\n      activeObject: Observable(null),\n      error: Observable(\"\")\n    };\n    self.view = require(\"./templates/editor\")(self).children[0];\n    document.body.appendChild(self.view);\n    self.activeObject.observe(function(newValue) {\n      if (newValue) {\n        return self.view.classList.add(\"active\");\n      } else {\n        return self.view.classList.remove(\"active\");\n      }\n    });\n    self.script.observe(function(script) {\n      var compiled, data, error, _ref;\n      try {\n        compiled = Function(CoffeeScript.compile(script, {\n          bare: true\n        }));\n      } catch (_error) {\n        error = _error;\n        self.error(error);\n        console.error(error);\n      }\n      if ((data = (_ref = self.activeObject()) != null ? _ref.data : void 0) && compiled) {\n        data.script = script;\n        return compiled.call(data);\n      }\n    });\n    return self;\n  };\n\n}).call(this);\n",
+      "type": "blob"
+    },
+    "_lib/hamljr_runtime": {
+      "path": "_lib/hamljr_runtime",
+      "content": "(function() {\n  var Runtime, dataName, document,\n    __slice = [].slice;\n\n  dataName = \"__hamlJR_data\";\n\n  if (typeof window !== \"undefined\" && window !== null) {\n    document = window.document;\n  } else {\n    document = global.document;\n  }\n\n  Runtime = function(context) {\n    var append, bindObservable, classes, id, lastParent, observeAttribute, observeText, pop, push, render, self, stack, top;\n    stack = [];\n    lastParent = function() {\n      var element, i;\n      i = stack.length - 1;\n      while ((element = stack[i]) && element.nodeType === 11) {\n        i -= 1;\n      }\n      return element;\n    };\n    top = function() {\n      return stack[stack.length - 1];\n    };\n    append = function(child) {\n      var _ref;\n      if ((_ref = top()) != null) {\n        _ref.appendChild(child);\n      }\n      return child;\n    };\n    push = function(child) {\n      return stack.push(child);\n    };\n    pop = function() {\n      return append(stack.pop());\n    };\n    render = function(child) {\n      push(child);\n      return pop();\n    };\n    bindObservable = function(element, value, update) {\n      var observable, observe, unobserve;\n      if (typeof Observable === \"undefined\" || Observable === null) {\n        update(value);\n        return;\n      }\n      observable = Observable(value);\n      observe = function() {\n        observable.observe(update);\n        return update(observable());\n      };\n      unobserve = function() {\n        return observable.stopObserving(update);\n      };\n      element.addEventListener(\"DOMNodeInserted\", observe, true);\n      element.addEventListener(\"DOMNodeRemoved\", unobserve, true);\n      return element;\n    };\n    id = function() {\n      var element, sources, update, value;\n      sources = 1 <= arguments.length ? __slice.call(arguments, 0) : [];\n      element = top();\n      update = function(newValue) {\n        if (typeof newValue === \"function\") {\n          newValue = newValue();\n        }\n        return element.id = newValue;\n      };\n      value = function() {\n        var possibleValues;\n        possibleValues = sources.map(function(source) {\n          if (typeof source === \"function\") {\n            return source();\n          } else {\n            return source;\n          }\n        }).filter(function(idValue) {\n          return idValue != null;\n        });\n        return possibleValues[possibleValues.length - 1];\n      };\n      return bindObservable(element, value, update);\n    };\n    classes = function() {\n      var element, sources, update, value;\n      sources = 1 <= arguments.length ? __slice.call(arguments, 0) : [];\n      element = top();\n      update = function(newValue) {\n        if (typeof newValue === \"function\") {\n          newValue = newValue();\n        }\n        return element.className = newValue;\n      };\n      value = function() {\n        var possibleValues;\n        possibleValues = sources.map(function(source) {\n          if (typeof source === \"function\") {\n            return source();\n          } else {\n            return source;\n          }\n        }).filter(function(sourceValue) {\n          return sourceValue != null;\n        });\n        return possibleValues.join(\" \");\n      };\n      return bindObservable(element, value, update);\n    };\n    observeAttribute = function(name, value) {\n      var element, update;\n      element = top();\n      if ((name === \"value\") && (typeof value === \"function\")) {\n        element.value = value();\n        element.onchange = function() {\n          return value(element.value);\n        };\n        if (value.observe) {\n          value.observe(function(newValue) {\n            return element.value = newValue;\n          });\n        }\n      } else {\n        update = function(newValue) {\n          return element.setAttribute(name, newValue);\n        };\n        bindObservable(element, value, update);\n      }\n      return element;\n    };\n    observeText = function(value) {\n      var element, update;\n      switch (value != null ? value.nodeType : void 0) {\n        case 1:\n        case 3:\n        case 11:\n          render(value);\n          return;\n      }\n      element = document.createTextNode('');\n      update = function(newValue) {\n        return element.nodeValue = newValue;\n      };\n      bindObservable(element, value, update);\n      return render(element);\n    };\n    self = {\n      push: push,\n      pop: pop,\n      id: id,\n      classes: classes,\n      attribute: observeAttribute,\n      text: observeText,\n      filter: function(name, content) {},\n      each: function(items, fn) {\n        var elements, parent, replace;\n        items = Observable(items);\n        elements = [];\n        parent = lastParent();\n        items.observe(function(newItems) {\n          return replace(elements, newItems);\n        });\n        replace = function(oldElements, items) {\n          var firstElement;\n          if (oldElements) {\n            firstElement = oldElements[0];\n            parent = (firstElement != null ? firstElement.parentElement : void 0) || parent;\n            elements = items.map(function(item, index, array) {\n              var element;\n              element = fn.call(item, item, index, array);\n              element[dataName] = item;\n              parent.insertBefore(element, firstElement);\n              return element;\n            });\n            return oldElements.forEach(function(element) {\n              return element.remove();\n            });\n          } else {\n            return elements = items.map(function(item, index, array) {\n              var element;\n              element = fn.call(item, item, index, array);\n              element[dataName] = item;\n              return element;\n            });\n          }\n        };\n        return replace(null, items);\n      },\n      \"with\": function(item, fn) {\n        var element, replace, value;\n        element = null;\n        item = Observable(item);\n        item.observe(function(newValue) {\n          return replace(element, newValue);\n        });\n        value = item();\n        replace = function(oldElement, value) {\n          var parent;\n          element = fn.call(value);\n          element[dataName] = item;\n          if (oldElement) {\n            parent = oldElement.parentElement;\n            parent.insertBefore(element, oldElement);\n            return oldElement.remove();\n          } else {\n\n          }\n        };\n        return replace(element, value);\n      },\n      on: function(eventName, fn) {\n        var element;\n        element = lastParent();\n        if (eventName === \"change\") {\n          switch (element.nodeName) {\n            case \"SELECT\":\n              element[\"on\" + eventName] = function() {\n                var selectedOption;\n                selectedOption = this.options[this.selectedIndex];\n                return fn(selectedOption[dataName]);\n              };\n              if (fn.observe) {\n                return fn.observe(function(newValue) {\n                  return Array.prototype.forEach.call(element.options, function(option, index) {\n                    if (option[dataName] === newValue) {\n                      return element.selectedIndex = index;\n                    }\n                  });\n                });\n              }\n              break;\n            default:\n              element[\"on\" + eventName] = function() {\n                return fn(element.value);\n              };\n              if (fn.observe) {\n                return fn.observe(function(newValue) {\n                  return element.value = newValue;\n                });\n              }\n          }\n        } else {\n          return element[\"on\" + eventName] = function(event) {\n            return fn.call(context, event);\n          };\n        }\n      }\n    };\n    return self;\n  };\n\n  module.exports = Runtime;\n\n}).call(this);\n",
       "type": "blob"
     }
   },
@@ -100,6 +135,9 @@ window["STRd6/pixi-test:master"]({
   },
   "version": "0.1.0",
   "entryPoint": "main",
+  "remoteDependencies": [
+    "https://cdnjs.cloudflare.com/ajax/libs/coffee-script/1.6.3/coffee-script.min.js"
+  ],
   "repository": {
     "branch": "master",
     "default_branch": "master",
@@ -268,6 +306,178 @@ window["STRd6/pixi-test:master"]({
         "network_count": 0,
         "subscribers_count": 2,
         "branch": "v0.1.0",
+        "publishBranch": "gh-pages"
+      },
+      "dependencies": {}
+    },
+    "observable": {
+      "source": {
+        "LICENSE": {
+          "path": "LICENSE",
+          "mode": "100644",
+          "content": "The MIT License (MIT)\n\nCopyright (c) 2014 distri\n\nPermission is hereby granted, free of charge, to any person obtaining a copy of\nthis software and associated documentation files (the \"Software\"), to deal in\nthe Software without restriction, including without limitation the rights to\nuse, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of\nthe Software, and to permit persons to whom the Software is furnished to do so,\nsubject to the following conditions:\n\nThe above copyright notice and this permission notice shall be included in all\ncopies or substantial portions of the Software.\n\nTHE SOFTWARE IS PROVIDED \"AS IS\", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR\nIMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS\nFOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR\nCOPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER\nIN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN\nCONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.\n",
+          "type": "blob"
+        },
+        "README.md": {
+          "path": "README.md",
+          "mode": "100644",
+          "content": "observable\n==========\n",
+          "type": "blob"
+        },
+        "main.coffee.md": {
+          "path": "main.coffee.md",
+          "mode": "100644",
+          "content": "Observable\n==========\n\n`Observable` allows for observing arrays, functions, and objects.\n\nFunction dependencies are automagically observed.\n\nStandard array methods are proxied through to the underlying array.\n\n    Observable = (value) ->\n\nReturn the object if it is already an observable object.\n\n      return value if typeof value?.observe is \"function\"\n\nMaintain a set of listeners to observe changes and provide a helper to notify each observer.\n\n      listeners = []\n\n      notify = (newValue) ->\n        listeners.forEach (listener) ->\n          listener(newValue)\n\nOur observable function is stored as a reference to `self`.\n\nIf `value` is a function compute dependencies and listen to observables that it depends on.\n\n      if typeof value is 'function'\n        fn = value\n        self = ->\n          # Automagic dependency observation\n          magicDependency(self)\n\n          return value\n\n        self.observe = (listener) ->\n          listeners.push listener\n\n        changed = ->\n          value = fn()\n          notify(value)\n\n        value = computeDependencies(fn, changed)\n\n      else\n\nWhen called with zero arguments it is treated as a getter. When called with one argument it is treated as a setter.\n\nChanges to the value will trigger notifications.\n\nThe value is always returned.\n\n        self = (newValue) ->\n          if arguments.length > 0\n            if value != newValue\n              value = newValue\n\n              notify(newValue)\n          else\n            # Automagic dependency observation\n            magicDependency(self)\n\n          return value\n\nAdd a listener for when this object changes.\n\n        self.observe = (listener) ->\n          listeners.push listener\n\nThis `each` iterator is similar to [the Maybe monad](http://en.wikipedia.org/wiki/Monad_&#40;functional_programming&#41;#The_Maybe_monad) in that our observable may contain a single value or nothing at all.\n\n      self.each = (args...) ->\n        if value?\n          [value].forEach(args...)\n\nIf the value is an array then proxy array methods and add notifications to mutation events.\n\n      if Array.isArray(value)\n        [\n          \"concat\"\n          \"every\"\n          \"filter\"\n          \"forEach\"\n          \"indexOf\"\n          \"join\"\n          \"lastIndexOf\"\n          \"map\"\n          \"reduce\"\n          \"reduceRight\"\n          \"slice\"\n          \"some\"\n        ].forEach (method) ->\n          self[method] = (args...) ->\n            value[method](args...)\n\n        [\n          \"pop\"\n          \"push\"\n          \"reverse\"\n          \"shift\"\n          \"splice\"\n          \"sort\"\n          \"unshift\"\n        ].forEach (method) ->\n          self[method] = (args...) ->\n            notifyReturning value[method](args...)\n\n        notifyReturning = (returnValue) ->\n          notify(value)\n\n          return returnValue\n\nAdd some extra helpful methods to array observables.\n\n        extend self,\n          each: (args...) ->\n            self.forEach(args...)\n\n            return self\n\nRemove an element from the array and notify observers of changes.\n\n          remove: (object) ->\n            index = value.indexOf(object)\n\n            if index >= 0\n              notifyReturning value.splice(index, 1)[0]\n\n          get: (index) ->\n            value[index]\n\n          first: ->\n            value[0]\n\n          last: ->\n            value[value.length-1]\n\n      self.stopObserving = (fn) ->\n        remove listeners, fn\n\n      return self\n\nExport `Observable`\n\n    module.exports = Observable\n\nAppendix\n--------\n\nThe extend method adds one objects properties to another.\n\n    extend = (target, sources...) ->\n      for source in sources\n        for name of source\n          target[name] = source[name]\n\n      return target\n\nSuper hax for computing dependencies. This needs to be a shared global so that\ndifferent bundled versions of observable libraries can interoperate.\n\n    global.OBSERVABLE_ROOT_HACK = undefined\n\n    magicDependency = (self) ->\n      if base = global.OBSERVABLE_ROOT_HACK\n        self.observe base\n\n    withBase = (root, fn) ->\n      global.OBSERVABLE_ROOT_HACK = root\n      value = fn()\n      global.OBSERVABLE_ROOT_HACK = undefined\n\n      return value\n\n    base = ->\n      global.OBSERVABLE_ROOT_HACK\n\nAutomagically compute dependencies.\n\n    computeDependencies = (fn, root) ->\n      withBase root, ->\n        fn()\n\nRemove a value from an array.\n\n    remove = (array, value) ->\n      index = array.indexOf(value)\n\n      if index >= 0\n        array.splice(index, 1)[0]\n",
+          "type": "blob"
+        },
+        "pixie.cson": {
+          "path": "pixie.cson",
+          "mode": "100644",
+          "content": "version: \"0.1.1\"\n",
+          "type": "blob"
+        },
+        "test/observable.coffee": {
+          "path": "test/observable.coffee",
+          "mode": "100644",
+          "content": "Observable = require \"../main\"\n\ndescribe 'Observable', ->\n  it 'should create an observable for an object', ->\n    n = 5\n\n    observable = Observable(n)\n\n    assert.equal(observable(), n)\n\n  it 'should fire events when setting', ->\n    string = \"yolo\"\n\n    observable = Observable(string)\n    observable.observe (newValue) ->\n      assert.equal newValue, \"4life\"\n\n    observable(\"4life\")\n\n  it 'should be idempotent', ->\n    o = Observable(5)\n\n    assert.equal o, Observable(o)\n\n  describe \"#each\", ->\n    it \"should be invoked once if there is an observable\", ->\n      o = Observable(5)\n      called = 0\n\n      o.each (value) ->\n        called += 1\n        assert.equal value, 5\n\n      assert.equal called, 1\n\n    it \"should not be invoked if observable is null\", ->\n      o = Observable(null)\n      called = 0\n\n      o.each (value) ->\n        called += 1\n\n      assert.equal called, 0\n\n  it \"should allow for stopping observation\", ->\n    observable = Observable(\"string\")\n\n    called = 0\n    fn = (newValue) ->\n      called += 1\n      assert.equal newValue, \"4life\"\n\n    observable.observe fn\n\n    observable(\"4life\")\n\n    observable.stopObserving fn\n\n    observable(\"wat\")\n\n    assert.equal called, 1\n\ndescribe \"Observable Array\", ->\n  it \"should proxy array methods\", ->\n    o = Observable [5]\n\n    o.map (n) ->\n      assert.equal n, 5\n\n  it \"should notify on mutation methods\", (done) ->\n    o = Observable []\n\n    o.observe (newValue) ->\n      assert.equal newValue[0], 1\n\n    o.push 1\n\n    done()\n\n  it \"should have an each method\", ->\n    o = Observable []\n\n    assert o.each\n\n  it \"#get\", ->\n    o = Observable [0, 1, 2, 3]\n\n    assert.equal o.get(2), 2\n\n  it \"#first\", ->\n    o = Observable [0, 1, 2, 3]\n\n    assert.equal o.first(), 0\n\n  it \"#last\", ->\n    o = Observable [0, 1, 2, 3]\n\n    assert.equal o.last(), 3\n\n  it \"#remove\", (done) ->\n    o = Observable [0, 1, 2, 3]\n\n    o.observe (newValue) ->\n      assert.equal newValue.length, 3\n      setTimeout ->\n        done()\n      , 0\n\n    assert.equal o.remove(2), 2\n\n  # TODO: This looks like it might be impossible\n  it \"should proxy the length property\"\n\ndescribe \"Observable functions\", ->\n  it \"should compute dependencies\", (done) ->\n    firstName = Observable \"Duder\"\n    lastName = Observable \"Man\"\n\n    o = Observable ->\n      \"#{firstName()} #{lastName()}\"\n\n    o.observe (newValue) ->\n      assert.equal newValue, \"Duder Bro\"\n\n      done()\n\n    lastName \"Bro\"\n\n  it \"should allow double nesting\", (done) ->\n    bottom = Observable \"rad\"\n    middle = Observable ->\n      bottom()\n    top = Observable ->\n      middle()\n\n    top.observe (newValue) ->\n      assert.equal newValue, \"wat\"\n      assert.equal top(), newValue\n      assert.equal middle(), newValue\n\n      done()\n\n    bottom(\"wat\")\n\n  it \"should have an each method\", ->\n    o = Observable ->\n\n    assert o.each\n\n  it \"should not invoke when returning undefined\", ->\n    o = Observable ->\n\n    o.each ->\n      assert false\n\n  it \"should invoke when returning any defined value\", (done) ->\n    o = Observable -> 5\n\n    o.each (n) ->\n      assert.equal n, 5\n      done()\n\n  it \"should work on an array dependency\", ->\n    oA = Observable [1, 2, 3]\n\n    o = Observable ->\n      oA()[0]\n\n    last = Observable ->\n      oA()[oA().length-1]\n\n    assert.equal o(), 1\n\n    oA.unshift 0\n\n    assert.equal o(), 0\n\n    oA.push 4\n\n    assert.equal last(), 4, \"Last should be 4\"\n",
+          "type": "blob"
+        }
+      },
+      "distribution": {
+        "main": {
+          "path": "main",
+          "content": "(function() {\n  var Observable, base, computeDependencies, extend, magicDependency, remove, withBase,\n    __slice = [].slice;\n\n  Observable = function(value) {\n    var changed, fn, listeners, notify, notifyReturning, self;\n    if (typeof (value != null ? value.observe : void 0) === \"function\") {\n      return value;\n    }\n    listeners = [];\n    notify = function(newValue) {\n      return listeners.forEach(function(listener) {\n        return listener(newValue);\n      });\n    };\n    if (typeof value === 'function') {\n      fn = value;\n      self = function() {\n        magicDependency(self);\n        return value;\n      };\n      self.observe = function(listener) {\n        return listeners.push(listener);\n      };\n      changed = function() {\n        value = fn();\n        return notify(value);\n      };\n      value = computeDependencies(fn, changed);\n    } else {\n      self = function(newValue) {\n        if (arguments.length > 0) {\n          if (value !== newValue) {\n            value = newValue;\n            notify(newValue);\n          }\n        } else {\n          magicDependency(self);\n        }\n        return value;\n      };\n      self.observe = function(listener) {\n        return listeners.push(listener);\n      };\n    }\n    self.each = function() {\n      var args, _ref;\n      args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];\n      if (value != null) {\n        return (_ref = [value]).forEach.apply(_ref, args);\n      }\n    };\n    if (Array.isArray(value)) {\n      [\"concat\", \"every\", \"filter\", \"forEach\", \"indexOf\", \"join\", \"lastIndexOf\", \"map\", \"reduce\", \"reduceRight\", \"slice\", \"some\"].forEach(function(method) {\n        return self[method] = function() {\n          var args;\n          args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];\n          return value[method].apply(value, args);\n        };\n      });\n      [\"pop\", \"push\", \"reverse\", \"shift\", \"splice\", \"sort\", \"unshift\"].forEach(function(method) {\n        return self[method] = function() {\n          var args;\n          args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];\n          return notifyReturning(value[method].apply(value, args));\n        };\n      });\n      notifyReturning = function(returnValue) {\n        notify(value);\n        return returnValue;\n      };\n      extend(self, {\n        each: function() {\n          var args;\n          args = 1 <= arguments.length ? __slice.call(arguments, 0) : [];\n          self.forEach.apply(self, args);\n          return self;\n        },\n        remove: function(object) {\n          var index;\n          index = value.indexOf(object);\n          if (index >= 0) {\n            return notifyReturning(value.splice(index, 1)[0]);\n          }\n        },\n        get: function(index) {\n          return value[index];\n        },\n        first: function() {\n          return value[0];\n        },\n        last: function() {\n          return value[value.length - 1];\n        }\n      });\n    }\n    self.stopObserving = function(fn) {\n      return remove(listeners, fn);\n    };\n    return self;\n  };\n\n  module.exports = Observable;\n\n  extend = function() {\n    var name, source, sources, target, _i, _len;\n    target = arguments[0], sources = 2 <= arguments.length ? __slice.call(arguments, 1) : [];\n    for (_i = 0, _len = sources.length; _i < _len; _i++) {\n      source = sources[_i];\n      for (name in source) {\n        target[name] = source[name];\n      }\n    }\n    return target;\n  };\n\n  global.OBSERVABLE_ROOT_HACK = void 0;\n\n  magicDependency = function(self) {\n    var base;\n    if (base = global.OBSERVABLE_ROOT_HACK) {\n      return self.observe(base);\n    }\n  };\n\n  withBase = function(root, fn) {\n    var value;\n    global.OBSERVABLE_ROOT_HACK = root;\n    value = fn();\n    global.OBSERVABLE_ROOT_HACK = void 0;\n    return value;\n  };\n\n  base = function() {\n    return global.OBSERVABLE_ROOT_HACK;\n  };\n\n  computeDependencies = function(fn, root) {\n    return withBase(root, function() {\n      return fn();\n    });\n  };\n\n  remove = function(array, value) {\n    var index;\n    index = array.indexOf(value);\n    if (index >= 0) {\n      return array.splice(index, 1)[0];\n    }\n  };\n\n}).call(this);\n",
+          "type": "blob"
+        },
+        "pixie": {
+          "path": "pixie",
+          "content": "module.exports = {\"version\":\"0.1.1\"};",
+          "type": "blob"
+        },
+        "test/observable": {
+          "path": "test/observable",
+          "content": "(function() {\n  var Observable;\n\n  Observable = require(\"../main\");\n\n  describe('Observable', function() {\n    it('should create an observable for an object', function() {\n      var n, observable;\n      n = 5;\n      observable = Observable(n);\n      return assert.equal(observable(), n);\n    });\n    it('should fire events when setting', function() {\n      var observable, string;\n      string = \"yolo\";\n      observable = Observable(string);\n      observable.observe(function(newValue) {\n        return assert.equal(newValue, \"4life\");\n      });\n      return observable(\"4life\");\n    });\n    it('should be idempotent', function() {\n      var o;\n      o = Observable(5);\n      return assert.equal(o, Observable(o));\n    });\n    describe(\"#each\", function() {\n      it(\"should be invoked once if there is an observable\", function() {\n        var called, o;\n        o = Observable(5);\n        called = 0;\n        o.each(function(value) {\n          called += 1;\n          return assert.equal(value, 5);\n        });\n        return assert.equal(called, 1);\n      });\n      return it(\"should not be invoked if observable is null\", function() {\n        var called, o;\n        o = Observable(null);\n        called = 0;\n        o.each(function(value) {\n          return called += 1;\n        });\n        return assert.equal(called, 0);\n      });\n    });\n    return it(\"should allow for stopping observation\", function() {\n      var called, fn, observable;\n      observable = Observable(\"string\");\n      called = 0;\n      fn = function(newValue) {\n        called += 1;\n        return assert.equal(newValue, \"4life\");\n      };\n      observable.observe(fn);\n      observable(\"4life\");\n      observable.stopObserving(fn);\n      observable(\"wat\");\n      return assert.equal(called, 1);\n    });\n  });\n\n  describe(\"Observable Array\", function() {\n    it(\"should proxy array methods\", function() {\n      var o;\n      o = Observable([5]);\n      return o.map(function(n) {\n        return assert.equal(n, 5);\n      });\n    });\n    it(\"should notify on mutation methods\", function(done) {\n      var o;\n      o = Observable([]);\n      o.observe(function(newValue) {\n        return assert.equal(newValue[0], 1);\n      });\n      o.push(1);\n      return done();\n    });\n    it(\"should have an each method\", function() {\n      var o;\n      o = Observable([]);\n      return assert(o.each);\n    });\n    it(\"#get\", function() {\n      var o;\n      o = Observable([0, 1, 2, 3]);\n      return assert.equal(o.get(2), 2);\n    });\n    it(\"#first\", function() {\n      var o;\n      o = Observable([0, 1, 2, 3]);\n      return assert.equal(o.first(), 0);\n    });\n    it(\"#last\", function() {\n      var o;\n      o = Observable([0, 1, 2, 3]);\n      return assert.equal(o.last(), 3);\n    });\n    it(\"#remove\", function(done) {\n      var o;\n      o = Observable([0, 1, 2, 3]);\n      o.observe(function(newValue) {\n        assert.equal(newValue.length, 3);\n        return setTimeout(function() {\n          return done();\n        }, 0);\n      });\n      return assert.equal(o.remove(2), 2);\n    });\n    return it(\"should proxy the length property\");\n  });\n\n  describe(\"Observable functions\", function() {\n    it(\"should compute dependencies\", function(done) {\n      var firstName, lastName, o;\n      firstName = Observable(\"Duder\");\n      lastName = Observable(\"Man\");\n      o = Observable(function() {\n        return \"\" + (firstName()) + \" \" + (lastName());\n      });\n      o.observe(function(newValue) {\n        assert.equal(newValue, \"Duder Bro\");\n        return done();\n      });\n      return lastName(\"Bro\");\n    });\n    it(\"should allow double nesting\", function(done) {\n      var bottom, middle, top;\n      bottom = Observable(\"rad\");\n      middle = Observable(function() {\n        return bottom();\n      });\n      top = Observable(function() {\n        return middle();\n      });\n      top.observe(function(newValue) {\n        assert.equal(newValue, \"wat\");\n        assert.equal(top(), newValue);\n        assert.equal(middle(), newValue);\n        return done();\n      });\n      return bottom(\"wat\");\n    });\n    it(\"should have an each method\", function() {\n      var o;\n      o = Observable(function() {});\n      return assert(o.each);\n    });\n    it(\"should not invoke when returning undefined\", function() {\n      var o;\n      o = Observable(function() {});\n      return o.each(function() {\n        return assert(false);\n      });\n    });\n    it(\"should invoke when returning any defined value\", function(done) {\n      var o;\n      o = Observable(function() {\n        return 5;\n      });\n      return o.each(function(n) {\n        assert.equal(n, 5);\n        return done();\n      });\n    });\n    return it(\"should work on an array dependency\", function() {\n      var last, o, oA;\n      oA = Observable([1, 2, 3]);\n      o = Observable(function() {\n        return oA()[0];\n      });\n      last = Observable(function() {\n        return oA()[oA().length - 1];\n      });\n      assert.equal(o(), 1);\n      oA.unshift(0);\n      assert.equal(o(), 0);\n      oA.push(4);\n      return assert.equal(last(), 4, \"Last should be 4\");\n    });\n  });\n\n}).call(this);\n",
+          "type": "blob"
+        }
+      },
+      "progenitor": {
+        "url": "http://strd6.github.io/editor/"
+      },
+      "version": "0.1.1",
+      "entryPoint": "main",
+      "repository": {
+        "id": 17119562,
+        "name": "observable",
+        "full_name": "distri/observable",
+        "owner": {
+          "login": "distri",
+          "id": 6005125,
+          "avatar_url": "https://avatars.githubusercontent.com/u/6005125?",
+          "gravatar_id": "192f3f168409e79c42107f081139d9f3",
+          "url": "https://api.github.com/users/distri",
+          "html_url": "https://github.com/distri",
+          "followers_url": "https://api.github.com/users/distri/followers",
+          "following_url": "https://api.github.com/users/distri/following{/other_user}",
+          "gists_url": "https://api.github.com/users/distri/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/distri/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/distri/subscriptions",
+          "organizations_url": "https://api.github.com/users/distri/orgs",
+          "repos_url": "https://api.github.com/users/distri/repos",
+          "events_url": "https://api.github.com/users/distri/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/distri/received_events",
+          "type": "Organization",
+          "site_admin": false
+        },
+        "private": false,
+        "html_url": "https://github.com/distri/observable",
+        "description": "",
+        "fork": false,
+        "url": "https://api.github.com/repos/distri/observable",
+        "forks_url": "https://api.github.com/repos/distri/observable/forks",
+        "keys_url": "https://api.github.com/repos/distri/observable/keys{/key_id}",
+        "collaborators_url": "https://api.github.com/repos/distri/observable/collaborators{/collaborator}",
+        "teams_url": "https://api.github.com/repos/distri/observable/teams",
+        "hooks_url": "https://api.github.com/repos/distri/observable/hooks",
+        "issue_events_url": "https://api.github.com/repos/distri/observable/issues/events{/number}",
+        "events_url": "https://api.github.com/repos/distri/observable/events",
+        "assignees_url": "https://api.github.com/repos/distri/observable/assignees{/user}",
+        "branches_url": "https://api.github.com/repos/distri/observable/branches{/branch}",
+        "tags_url": "https://api.github.com/repos/distri/observable/tags",
+        "blobs_url": "https://api.github.com/repos/distri/observable/git/blobs{/sha}",
+        "git_tags_url": "https://api.github.com/repos/distri/observable/git/tags{/sha}",
+        "git_refs_url": "https://api.github.com/repos/distri/observable/git/refs{/sha}",
+        "trees_url": "https://api.github.com/repos/distri/observable/git/trees{/sha}",
+        "statuses_url": "https://api.github.com/repos/distri/observable/statuses/{sha}",
+        "languages_url": "https://api.github.com/repos/distri/observable/languages",
+        "stargazers_url": "https://api.github.com/repos/distri/observable/stargazers",
+        "contributors_url": "https://api.github.com/repos/distri/observable/contributors",
+        "subscribers_url": "https://api.github.com/repos/distri/observable/subscribers",
+        "subscription_url": "https://api.github.com/repos/distri/observable/subscription",
+        "commits_url": "https://api.github.com/repos/distri/observable/commits{/sha}",
+        "git_commits_url": "https://api.github.com/repos/distri/observable/git/commits{/sha}",
+        "comments_url": "https://api.github.com/repos/distri/observable/comments{/number}",
+        "issue_comment_url": "https://api.github.com/repos/distri/observable/issues/comments/{number}",
+        "contents_url": "https://api.github.com/repos/distri/observable/contents/{+path}",
+        "compare_url": "https://api.github.com/repos/distri/observable/compare/{base}...{head}",
+        "merges_url": "https://api.github.com/repos/distri/observable/merges",
+        "archive_url": "https://api.github.com/repos/distri/observable/{archive_format}{/ref}",
+        "downloads_url": "https://api.github.com/repos/distri/observable/downloads",
+        "issues_url": "https://api.github.com/repos/distri/observable/issues{/number}",
+        "pulls_url": "https://api.github.com/repos/distri/observable/pulls{/number}",
+        "milestones_url": "https://api.github.com/repos/distri/observable/milestones{/number}",
+        "notifications_url": "https://api.github.com/repos/distri/observable/notifications{?since,all,participating}",
+        "labels_url": "https://api.github.com/repos/distri/observable/labels{/name}",
+        "releases_url": "https://api.github.com/repos/distri/observable/releases{/id}",
+        "created_at": "2014-02-23T23:17:52Z",
+        "updated_at": "2014-04-02T00:41:29Z",
+        "pushed_at": "2014-04-02T00:41:31Z",
+        "git_url": "git://github.com/distri/observable.git",
+        "ssh_url": "git@github.com:distri/observable.git",
+        "clone_url": "https://github.com/distri/observable.git",
+        "svn_url": "https://github.com/distri/observable",
+        "homepage": null,
+        "size": 164,
+        "stargazers_count": 0,
+        "watchers_count": 0,
+        "language": "CoffeeScript",
+        "has_issues": true,
+        "has_downloads": true,
+        "has_wiki": true,
+        "forks_count": 0,
+        "mirror_url": null,
+        "open_issues_count": 0,
+        "forks": 0,
+        "open_issues": 0,
+        "watchers": 0,
+        "default_branch": "master",
+        "master_branch": "master",
+        "permissions": {
+          "admin": true,
+          "push": true,
+          "pull": true
+        },
+        "organization": {
+          "login": "distri",
+          "id": 6005125,
+          "avatar_url": "https://avatars.githubusercontent.com/u/6005125?",
+          "gravatar_id": "192f3f168409e79c42107f081139d9f3",
+          "url": "https://api.github.com/users/distri",
+          "html_url": "https://github.com/distri",
+          "followers_url": "https://api.github.com/users/distri/followers",
+          "following_url": "https://api.github.com/users/distri/following{/other_user}",
+          "gists_url": "https://api.github.com/users/distri/gists{/gist_id}",
+          "starred_url": "https://api.github.com/users/distri/starred{/owner}{/repo}",
+          "subscriptions_url": "https://api.github.com/users/distri/subscriptions",
+          "organizations_url": "https://api.github.com/users/distri/orgs",
+          "repos_url": "https://api.github.com/users/distri/repos",
+          "events_url": "https://api.github.com/users/distri/events{/privacy}",
+          "received_events_url": "https://api.github.com/users/distri/received_events",
+          "type": "Organization",
+          "site_admin": false
+        },
+        "network_count": 0,
+        "subscribers_count": 2,
+        "branch": "v0.1.1",
         "publishBranch": "gh-pages"
       },
       "dependencies": {}

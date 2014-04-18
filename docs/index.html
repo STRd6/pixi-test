@@ -37,16 +37,25 @@
             </div>
             <div class="content"><pre><code class="lang-coffeescript">TAU = <span class="number">2</span> * Math.PI
 _ = require <span class="string">"./lib/underscore"</span>
-{extend, pick} = _
+{extend, pick, debounce} = _
 
 {applyStylesheet} = require <span class="string">"util"</span>
 applyStylesheet require(<span class="string">"./style"</span>)
+{width, height} = require <span class="string">"./pixie"</span>
+
+{update, applyProperties} = require <span class="string">"./object_updater"</span>
+editor = require(<span class="string">"./editor"</span>)()
 
 PIXI = require <span class="string">"./lib/pixi"</span>
 
 stage = <span class="keyword">new</span> PIXI.Stage(<span class="number">0x66FF99</span>)
 
-renderer = PIXI.autoDetectRenderer(<span class="number">400</span>, <span class="number">300</span>)
+renderer = PIXI.autoDetectRenderer(width, height)
+
+<span class="function"><span class="title">clickHandler</span></span> = (mouseData) -&gt;
+
+  <span class="keyword">if</span> mouseData.originalEvent.ctrlKey
+    editor.activeObject mouseData.target
 
 document.body.appendChild(renderer.view)</code></pre>
 </div>
@@ -77,7 +86,10 @@ Object.keys(textures).forEach (name) -&gt;
               <p>Reload our app data or use our default data.</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript">data = ENV?.APP_STATE <span class="keyword">or</span> require(<span class="string">"./default_data"</span>)</code></pre>
+            <div class="content"><pre><code class="lang-coffeescript"><span class="keyword">if</span> data = ENV?.APP_STATE
+  data = JSON.parse(data)
+<span class="keyword">else</span>
+  data = require(<span class="string">"./default_data"</span>)</code></pre>
 </div>
         </li>
         
@@ -93,10 +105,11 @@ Object.keys(textures).forEach (name) -&gt;
             <div class="content"><pre><code class="lang-coffeescript">objects = data.map (datum) -&gt;
   object = <span class="keyword">new</span> PIXI.Sprite(textures[datum.sprite])
 
-  console.log object.sprite
+  object.data = datum
+  object.interactive = <span class="literal">true</span>
+  object.click = clickHandler
 
-  extend object, datum
-
+  applyProperties(object)
   stage.addChild(object)
 
   <span class="keyword">return</span> object</code></pre>
@@ -112,11 +125,12 @@ Object.keys(textures).forEach (name) -&gt;
               <p>Our main loop, update and draw.</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript"><span class="function"><span class="title">animate</span></span> = -&gt;
+            <div class="content"><pre><code class="lang-coffeescript">dt = <span class="number">1</span>/<span class="number">60</span>
+<span class="function"><span class="title">animate</span></span> = -&gt;
   requestAnimationFrame(animate)
 
   objects.forEach (object) -&gt;
-    object.rotation += TAU / <span class="number">60</span>
+    update(object, dt)
 
   renderer.render(stage)
 
@@ -134,8 +148,8 @@ requestAnimationFrame(animate)</code></pre>
 
             </div>
             <div class="content"><pre><code class="lang-coffeescript">global.<span class="function"><span class="title">appData</span></span> = -&gt;
-  stage.children.map (child) -&gt;
-    pick child, <span class="string">"sprite"</span>, <span class="string">"position"</span>, <span class="string">"anchor"</span>, <span class="string">"rotation"</span>
+  JSON.stringify stage.children.map (child) -&gt;
+    child.data
 
 console.log JSON.stringify(appData(), <span class="literal">null</span>, <span class="number">2</span>)</code></pre>
 </div>
