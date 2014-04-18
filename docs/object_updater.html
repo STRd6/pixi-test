@@ -59,12 +59,12 @@ SCENE_PROPS = w <span class="string">"""
               <div class="pilwrap">
                 <a class="pilcrow" href="#section-3">&#182;</a>
               </div>
-              <p>Run an objects update function if it exists</p>
+              <p>Run an objects update function if it exists.</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript"><span class="function"><span class="title">update</span></span> = (object, dt) -&gt;
-  object.data.update?(dt)
-  applyProperties(object)</code></pre>
+            <div class="content"><pre><code class="lang-coffeescript"><span class="function"><span class="title">update</span></span> = (hostObject, dt) -&gt;
+  hostObject.data.update?(dt)
+  applyProperties(hostObject)</code></pre>
 </div>
         </li>
         
@@ -78,13 +78,23 @@ SCENE_PROPS = w <span class="string">"""
 
             </div>
             <div class="content"><pre><code class="lang-coffeescript"><span class="comment"># TODO: Add `sprite` and `filters` lookups</span>
-<span class="function"><span class="title">applyProperties</span></span> = (object) -&gt;
-  data = object.data
+<span class="function"><span class="title">applyProperties</span></span> = (hostObject) -&gt;
+  data = hostObject.data
   SCENE_PROPS.forEach (name) -&gt;
     <span class="keyword">if</span> data[name] != <span class="literal">undefined</span>
-      object[name] = data[name]
+      hostObject[name] = data[name]
+
+<span class="function"><span class="title">hydrate</span></span> = (object) -&gt;
+  <span class="keyword">try</span>
+    compiled = Function CoffeeScript.compile object.script, bare: <span class="literal">true</span>
+  <span class="keyword">catch</span> error
+    console.error error
+
+  <span class="keyword">if</span> compiled
+    compiled.call object
 
 module.exports =
+  hydrate: hydrate
   update: update
   applyProperties: applyProperties</code></pre>
 </div>

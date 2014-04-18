@@ -35,9 +35,7 @@
               <p>Testing out Pixi.js</p>
 
             </div>
-            <div class="content"><pre><code class="lang-coffeescript">TAU = <span class="number">2</span> * Math.PI
-_ = require <span class="string">"./lib/underscore"</span>
-{extend, pick, debounce} = _
+            <div class="content"><pre><code class="lang-coffeescript">_ = require <span class="string">"./lib/underscore"</span>
 
 {applyStylesheet} = require <span class="string">"util"</span>
 applyStylesheet require(<span class="string">"./style"</span>)
@@ -47,15 +45,17 @@ applyStylesheet require(<span class="string">"./style"</span>)
 editor = require(<span class="string">"./editor"</span>)()
 
 PIXI = require <span class="string">"./lib/pixi"</span>
+<span class="comment"># PIXI.Texture.SCALE_MODE.DEFAULT = PIXI.Texture.SCALE_MODE.NEAREST</span>
 
 stage = <span class="keyword">new</span> PIXI.Stage(<span class="number">0x66FF99</span>)
 
 renderer = PIXI.autoDetectRenderer(width, height)
 
 <span class="function"><span class="title">clickHandler</span></span> = (mouseData) -&gt;
-
   <span class="keyword">if</span> mouseData.originalEvent.ctrlKey
-    editor.activeObject mouseData.target
+    editor.activeObject mouseData.target.data
+  <span class="keyword">else</span>
+    click(mouseData.target.data)
 
 document.body.appendChild(renderer.view)</code></pre>
 </div>
@@ -105,6 +105,10 @@ Object.keys(textures).forEach (name) -&gt;
             <div class="content"><pre><code class="lang-coffeescript">objects = data.map (datum) -&gt;
   object = <span class="keyword">new</span> PIXI.Sprite(textures[datum.sprite])
 
+  datum._host = object
+
+  object.anchor.x = object.anchor.y = <span class="number">0.5</span>
+
   object.data = datum
   object.interactive = <span class="literal">true</span>
   object.click = clickHandler
@@ -149,7 +153,7 @@ requestAnimationFrame(animate)</code></pre>
             </div>
             <div class="content"><pre><code class="lang-coffeescript">global.<span class="function"><span class="title">appData</span></span> = -&gt;
   JSON.stringify stage.children.map (child) -&gt;
-    child.data
+    _.omit child.data, <span class="string">"_host"</span>
 
 console.log JSON.stringify(appData(), <span class="literal">null</span>, <span class="number">2</span>)</code></pre>
 </div>
