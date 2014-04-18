@@ -4,9 +4,22 @@
     position:
       x: 200
       y: 150
-    anchor:
-      x: 0.5
-      y: 0.5
     rotation: 0
+    script: """
+      @update = (dt) ->
+        @rotation += dt
+
+      @click = ->
+        alert "Hello!"
+    """
+  }, {
+    sprite: "question"
+    position:
+      x: 1200
+      y: 80
+    script: """
+      @click = ->
+        alert "Ctrl+Click to edit!"
+    """
   }
 ]

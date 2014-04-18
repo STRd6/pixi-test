@@ -9,7 +9,7 @@ Testing out Pixi.js
     applyStylesheet require("./style")
     {width, height} = require "./pixie"
 
-    {update, applyProperties} = require "./object_updater"
+    {update, applyProperties, hydrate} = require "./object_updater"
     editor = require("./editor")()
 
     PIXI = require "./lib/pixi"
@@ -23,7 +23,8 @@ Testing out Pixi.js
       if mouseData.originalEvent.ctrlKey
         editor.activeObject mouseData.target.data
       else
-        click(mouseData.target.data)
+        if data = mouseData.target.data
+          data.click?(data)
 
     document.body.appendChild(renderer.view)
 
@@ -54,6 +55,7 @@ Reconstitute our objects using our app data.
       object.interactive = true
       object.click = clickHandler
 
+      hydrate(object.data)
       applyProperties(object)
       stage.addChild(object)
 
@@ -79,3 +81,4 @@ This is where we export and expose our app state.
         _.omit child.data, "_host"
 
     console.log JSON.stringify(appData(), null, 2)
+

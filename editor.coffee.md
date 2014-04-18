@@ -24,7 +24,8 @@ Simple script editor for objects
           self.view.classList.remove("active")
 
       self.activeObject.observe (object) ->
-        self.script object.script or ""
+        if object
+          self.script object.script or ""
 
       self.script.observe (script) ->
         if object = self.activeObject()
