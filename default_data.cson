@@ -21,5 +21,10 @@
       @click = ->
         alert "Ctrl+Click (or Cmd+Click) to edit!"
     """
+  }, {
+    sprite: "eye"
+    position:
+      x: 640
+      y: 300
   }
 ]

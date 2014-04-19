@@ -33,7 +33,7 @@ Load textures from a data file and map them into Pixi.js texture objects
     textures = require "./textures"
     Object.keys(textures).forEach (name) ->
       value = textures[name]
-      textures[name] = PIXI.Texture.fromImage("http://a0.pixiecdn.com/starwipe/#{value}", true)
+      textures[name] = PIXI.Texture.fromImage("http://a0.pixiecdn.com/#{value}", true)
 
 Reload our app data or use our default data.
 
