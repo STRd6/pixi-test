@@ -52,7 +52,7 @@ stage = <span class="keyword">new</span> PIXI.Stage(<span class="number">0x66FF9
 renderer = PIXI.autoDetectRenderer(width, height)
 
 <span class="function"><span class="title">clickHandler</span></span> = (mouseData) -&gt;
-  <span class="keyword">if</span> mouseData.originalEvent.ctrlKey
+  <span class="keyword">if</span> mouseData.originalEvent.ctrlKey <span class="keyword">or</span> mouseData.originalEvent.metaKey
     editor.activeObject mouseData.target.data
   <span class="keyword">else</span>
     <span class="keyword">if</span> data = mouseData.target.data
