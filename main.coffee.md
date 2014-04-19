@@ -20,7 +20,7 @@ Testing out Pixi.js
     renderer = PIXI.autoDetectRenderer(width, height)
 
     clickHandler = (mouseData) ->
-      if mouseData.originalEvent.ctrlKey
+      if mouseData.originalEvent.ctrlKey or mouseData.originalEvent.metaKey
         editor.activeObject mouseData.target.data
       else
         if data = mouseData.target.data

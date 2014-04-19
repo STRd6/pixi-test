@@ -19,7 +19,7 @@
       y: 80
     script: """
       @click = ->
-        alert "Ctrl+Click to edit!"
+        alert "Ctrl+Click (or Cmd+Click) to edit!"
     """
   }
 ]
