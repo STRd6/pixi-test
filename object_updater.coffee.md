@@ -1,7 +1,7 @@
 Object Updater
 ==============
 
-These functions 
+These functions
 
 Apply special properties to scene object.
 
@@ -10,14 +10,14 @@ Apply special properties to scene object.
 
     SCENE_PROPS = w """
       alpha
-      width
       height
       position
       rotation
       scale
+      tint
+      width
       x
       y
-      rotation
     """
 
 Run an objects update function if it exists.
