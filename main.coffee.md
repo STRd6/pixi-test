@@ -42,6 +42,17 @@ Reload our app data or use our default data.
     else
       data = require("./default_data")
 
+Fill children
+
+    populate = (object) ->
+      [0..4].forEach (i) ->
+        [0..4].forEach (j) ->
+          c = new PIXI.Sprite(textures.pixie)
+          object.addChild c
+          c.position =
+            x: i * 50 - 125
+            y: j * 50 - 125
+
 Reconstitute our objects using our app data.
 
     objects = data.map (datum) ->
@@ -55,8 +66,16 @@ Reconstitute our objects using our app data.
       object.interactive = true
       object.click = clickHandler
 
+      # TODO: Figure out child object compositions
+      # something like
+      # object.data.children?.forEach (datum) ->
+      #   recurse object, datum
+      # populate object
+
       hydrate(object.data)
       applyProperties(object)
+
+      # TODO: stage should be 'parent' or 'root' so we can handle trees of objects
       stage.addChild(object)
 
       return object
