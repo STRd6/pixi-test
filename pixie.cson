@@ -6,4 +6,4 @@ remoteDependencies: [
 ]
 dependencies:
   util: "distri/util:v0.1.0"
-  observable: "distri/observable:v0.1.1"
+  observable: "distri/observable:v0.3.8"

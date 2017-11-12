@@ -1,0 +1,4 @@
+- editor = this
+.overlay.editor(class=@activeClass)
+  - script = @script
+  textarea(value=@script)

@@ -1,9 +1,0 @@
-- editor = this
-.overlay.editor(class=@activeClass)
-  - script = @script
-  %textarea(value=@script)
-    - on "keyup", (e) ->
-      - if e.keyCode is 27 # ESC
-        - editor.activeObject null
-      - else
-        - script e.target.value
