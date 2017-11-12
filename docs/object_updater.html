@@ -5,38 +5,34 @@
   <title>object_updater</title>
   <meta http-equiv="content-type" content="text/html; charset=UTF-8">
   <meta name="viewport" content="width=device-width, target-densitydpi=160dpi, initial-scale=1.0; maximum-scale=1.0; user-scalable=0;">
-  <link rel="stylesheet" media="all" href="http://strd6.github.io/cdn/parallel/docco.css" />
+  <link rel="stylesheet" media="all" href="https://strd6.github.io/cdn/parallel/docco.css" />
 </head>
 <body>
   <div id="container">
     <div id="background"></div>
     <ul class="sections">
-        
-        
-        <li id="section-1">
-            <div class="annotation">
-              <div class="pilwrap">
-                <a class="pilcrow" href="#section-1">&#182;</a>
-              </div>
-              <h1 id="object-updater">Object Updater</h1>
+      <li id="section-1">
+  <div class="annotation">
+    <div class="pilwrap">
+      <a class="pilcrow" href="#section-1">&#182;</a>
+    </div>
+    <h1 id="object-updater">Object Updater</h1>
 
-            </div>
-            <div class="content"><pre><code class="lang-coffeescript">
+  </div>
+  <div class="content"><pre><code class="lang-coffeescript">
 </code></pre>
 </div>
-        </li>
-        
-        
-        <li id="section-2">
-            <div class="annotation">
-              <div class="pilwrap">
-                <a class="pilcrow" href="#section-2">&#182;</a>
-              </div>
-              <p>These functions</p>
+</li>
+<li id="section-2">
+  <div class="annotation">
+    <div class="pilwrap">
+      <a class="pilcrow" href="#section-2">&#182;</a>
+    </div>
+    <p>These functions</p>
 <p>Apply special properties to scene object.</p>
 
-            </div>
-            <div class="content"><pre><code class="lang-coffeescript"><span class="function"><span class="title">w</span></span> = (string) -&gt;
+  </div>
+  <div class="content"><pre><code class="lang-coffeescript"><span class="function"><span class="title">w</span></span> = (string) -&gt;
   string.split(<span class="regexp">/\s+/</span>)
 
 SCENE_PROPS = w <span class="string">"""
@@ -51,33 +47,29 @@ SCENE_PROPS = w <span class="string">"""
   y
 """</span></code></pre>
 </div>
-        </li>
-        
-        
-        <li id="section-3">
-            <div class="annotation">
-              <div class="pilwrap">
-                <a class="pilcrow" href="#section-3">&#182;</a>
-              </div>
-              <p>Run an objects update function if it exists.</p>
+</li>
+<li id="section-3">
+  <div class="annotation">
+    <div class="pilwrap">
+      <a class="pilcrow" href="#section-3">&#182;</a>
+    </div>
+    <p>Run an objects update function if it exists.</p>
 
-            </div>
-            <div class="content"><pre><code class="lang-coffeescript"><span class="function"><span class="title">update</span></span> = (hostObject, dt) -&gt;
+  </div>
+  <div class="content"><pre><code class="lang-coffeescript"><span class="function"><span class="title">update</span></span> = (hostObject, dt) -&gt;
   hostObject.data.update?(dt)
   applyProperties(hostObject)</code></pre>
 </div>
-        </li>
-        
-        
-        <li id="section-4">
-            <div class="annotation">
-              <div class="pilwrap">
-                <a class="pilcrow" href="#section-4">&#182;</a>
-              </div>
-              <p>Apply all the special properties into the PIXI runtime.</p>
+</li>
+<li id="section-4">
+  <div class="annotation">
+    <div class="pilwrap">
+      <a class="pilcrow" href="#section-4">&#182;</a>
+    </div>
+    <p>Apply all the special properties into the PIXI runtime.</p>
 
-            </div>
-            <div class="content"><pre><code class="lang-coffeescript"><span class="comment"># TODO: Add `sprite` and `filters` lookups</span>
+  </div>
+  <div class="content"><pre><code class="lang-coffeescript"><span class="comment"># TODO: Add `sprite` and `filters` lookups</span>
 <span class="function"><span class="title">applyProperties</span></span> = (hostObject) -&gt;
   data = hostObject.data
   SCENE_PROPS.forEach (name) -&gt;
@@ -98,8 +90,7 @@ module.exports =
   update: update
   applyProperties: applyProperties</code></pre>
 </div>
-        </li>
-        
+</li>
     </ul>
   </div>
   <script src="https://code.jquery.com/jquery-1.10.1.min.js"></script>
